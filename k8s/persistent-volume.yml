@@ -8,8 +8,8 @@ spec:
   accessModes:
     - ReadWriteOnce
   azureFile:
-    secretName: azure-secret # Secret with Azure Storage Account credentials
+    secretName: azure-secret # Secret that holds Azure Storage credentials
     secretNamespace: default # Namespace where the secret is stored
-    shareName: ${AZURE_CONTAINER_NAME} # Azure File share name
-    readOnly: false # Set to true if you only need read access
-  persistentVolumeReclaimPolicy: Retain # Optionally set to Retain to keep data even if PVC is deleted
+    shareName: azurecontainername # Use the actual name as per the secret key
+    readOnly: false # Set to true if you want read-only access
+  persistentVolumeReclaimPolicy: Retain
