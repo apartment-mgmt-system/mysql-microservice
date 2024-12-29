@@ -11,5 +11,5 @@ spec:
   azureFile:
     secretName: azure-secret # Secret that holds Azure Storage credentials
     secretNamespace: default # Namespace where the secret is stored
-    shareName: "$(azurefilename)" # Azure file share name as a string
+    shareName: "my-sql-file-container" #"$(azurefilename)" # Azure file share name as a string
     readOnly: false
