@@ -10,9 +10,5 @@ spec:
   azureFile:
     secretName: azure-secret # Secret that holds Azure Storage credentials
     secretNamespace: default # Namespace where the secret is stored
-    shareName:
-      valueFrom:
-        secretKeyRef:
-          name: azure-secret
-          key: azurefilename
-    readOnly: false # Set to true if you want read-only access
+    shareName: "$(azurefilename)" # Azure file share name as a string
+    readOnly: false
