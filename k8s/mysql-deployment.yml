@@ -1,9 +1,36 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sql-script-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  azureBlob:
+    secretName: azure-secret
+    secretNamespace: default
+    container: ${AZURE_CONTAINER_NAME}
+    storageAccount: ${AZURE_STORAGE_ACCOUNT_NAME}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sql-script-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql-deployment
-  labels:
-    app: mysql
 spec:
   replicas: 1
   selector:
@@ -29,48 +56,7 @@ spec:
             - name: sql-script
               mountPath: /docker-entrypoint-initdb.d/
               readOnly: true
-      initContainers:
-        - name: azure-blob-init
-          image: mcr.microsoft.com/azure-storage/azcopy:latest
-          command:
-            [
-              "/bin/sh",
-              "-c",
-              "azcopy cp https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${AZURE_CONTAINER_NAME}/Scripts.sql /docker-entrypoint-initdb.d/",
-            ]
-          env:
-            - name: AZURE_STORAGE_ACCOUNT_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: azure-secret
-                  key: azurestorageaccountname
-            - name: AZURE_STORAGE_ACCOUNT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: azure-secret
-                  key: azurestorageaccountkey
-            - name: AZURE_CONTAINER_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: azure-secret
-                  key: azurecontainername
-          volumeMounts:
-            - name: sql-script
-              mountPath: /docker-entrypoint-initdb.d/
       volumes:
         - name: sql-script
-          emptyDir: {}
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-service
-spec:
-  selector:
-    app: mysql
-  ports:
-    - protocol: TCP
-      port: 3306
-      targetPort: 3306
-  type: LoadBalancer
+          persistentVolumeClaim:
+            claimName: sql-script-pvc
