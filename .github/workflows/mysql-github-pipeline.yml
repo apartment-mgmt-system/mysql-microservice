@@ -1,4 +1,4 @@
-name: Deploy MySQL to Kubernetes
+name: Deploy MySQL to Kubernetes with Azure Files
 
 on:
   push:
@@ -18,36 +18,51 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
-          version: "latest"
+          version: "1.24.0" # Use a stable version (latest might change in unpredictable ways)
 
-      - name: Configure Kubectl using kubconfig
+      # Step 3: Configure kubectl using kubeconfig from GitHub Secrets
+      - name: Configure kubectl using kubeconfig
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
 
-      # Step 3: Create Kubernetes Secrets from GitHub Secrets
+      # Step 4: Create Kubernetes Secrets from GitHub Secrets
       - name: Create Kubernetes Secrets
         run: |
+          # Create Azure storage secrets for PV
           kubectl create secret generic azure-secret \
             --from-literal=azurestorageaccountname=${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
             --from-literal=azurestorageaccountkey=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
             --from-literal=azurecontainername=${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
+          # Create MySQL root password secret
           kubectl create secret generic mysql-secret \
             --from-literal=mysql-root-password=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # Step 4: Apply MySQL deployment
+      # Step 5: Apply PersistentVolume (PV) and PersistentVolumeClaim (PVC)
+      - name: Apply PersistentVolume and PersistentVolumeClaim
+        run: |
+          kubectl apply -f k8s/persistent-volume.yml
+          kubectl apply -f k8s/persistent-volume-claim.yml
+
+      # Step 6: Apply MySQL deployment
       - name: Apply Kubernetes MySQL deployment
         run: |
-          kubectl apply -f k8s/mysql-deployment.yml
+          kubectl apply -f k8s/mysql-deployment.yml  # Ensure the correct file path for your MySQL deployment
 
+      # Step 7: Apply MySQL Service
+      - name: Apply MySQL service
+        run: |
+          kubectl apply -f k8s/mysql-service.yml  # Ensure the correct file path for your MySQL service
+
+      # Step 8: Clear kubeconfig file for security
       - name: Clear kubeconfig file
         run: |
           rm -f $HOME/.kube/config
 
-      # Step 5: Check MySQL pod status
+      # Step 9: Check MySQL pod status
       - name: Check MySQL pod status
         run: |
           kubectl get pods -l app=mysql
