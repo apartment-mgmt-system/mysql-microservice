@@ -4,12 +4,10 @@ metadata:
   name: sql-script-pv
 spec:
   capacity:
-    storage: 1Gi
+    storage: 50Mi
   accessModes:
     - ReadWriteOnce
   storageClassName: default
   azureFile:
-    secretName: azure-secret # Secret that holds Azure Storage credentials
-    secretNamespace: default # Namespace where the secret is stored
-    shareName: "my-sql-file-container" #"$(azurefilename)" # Azure file share name as a string
-    readOnly: false
+    secretName: azure-secret
+    shareName: "my-sql-file-container"

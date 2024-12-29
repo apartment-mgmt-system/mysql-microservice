@@ -27,12 +27,11 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
 
       # Step 4: Create Kubernetes Secrets from GitHub Secrets
-      - name: Create Kubernetes Secrets
+      - name: Create secrets for azurestorageaccount
         run: |
           kubectl create secret generic azure-secret \
             --from-literal=azurestorageaccountname=${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
             --from-literal=azurestorageaccountkey=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
-            --from-literal=azurefilename=${{ secrets.AZURE_FILE_CONTAINER_NAME }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
           kubectl create secret generic mysql-secret \
@@ -40,7 +39,7 @@ jobs:
             --dry-run=client -o yaml | kubectl apply -f -
 
       # Step 5: Apply MySQL deployment
-      - name: Apply Kubernetes MySQL deployment
+      - name: Apply Kubernetes deployment for pv, pvc & MY SQL
         run: |
           kubectl apply -f k8s/persistent-volume.yml
           kubectl apply -f k8s/persistent-volume-claim.yml

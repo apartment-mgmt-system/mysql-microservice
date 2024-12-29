@@ -21,15 +21,15 @@ spec:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret # Secret for MySQL root password
+                  name: mysql-secret
                   key: mysql-root-password
           ports:
             - containerPort: 3306
           volumeMounts:
             - name: sql-script
-              mountPath: /docker-entrypoint-initdb.d/ # Mount SQL scripts directory
+              mountPath: /docker-entrypoint-initdb.d/
               readOnly: true
       volumes:
         - name: sql-script
           persistentVolumeClaim:
-            claimName: sql-script-pvc # Reference the PVC created above
+            claimName: sql-script-pvc
