@@ -23,21 +23,6 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-root-password
-            #- name: MYSQL_DATABASE
-            #  valueFrom:
-            #    secretKeyRef:
-            #      name: mysql-secret
-            #      key: mysql-database
-            #- name: MYSQL_USER
-            #  valueFrom:
-            #    secretKeyRef:
-            #      name: mysql-secret
-            #      key: mysql-user
-            #- name: MYSQL_PASSWORD
-            #  valueFrom:
-            #    secretKeyRef:
-            #      name: mysql-secret
-            #      key: mysql-password
           ports:
             - containerPort: 3306
           volumeMounts:
@@ -47,7 +32,12 @@ spec:
       initContainers:
         - name: azure-blob-init
           image: mcr.microsoft.com/azure-storage/azcopy:latest
-          command: ["/bin/sh", "-c", "azcopy cp https://<your-storage-account-name>.blob.core.windows.net/<your-container-name>/Scripts.sql /docker-entrypoint-initdb.d/"]
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "azcopy cp https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${AZURE_CONTAINER_NAME}/Scripts.sql /docker-entrypoint-initdb.d/",
+            ]
           env:
             - name: AZURE_STORAGE_ACCOUNT_NAME
               valueFrom:
@@ -59,12 +49,18 @@ spec:
                 secretKeyRef:
                   name: azure-secret
                   key: azurestorageaccountkey
+            - name: AZURE_CONTAINER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: azure-secret
+                  key: azurecontainername
           volumeMounts:
             - name: sql-script
               mountPath: /docker-entrypoint-initdb.d/
       volumes:
         - name: sql-script
           emptyDir: {}
+
 ---
 apiVersion: v1
 kind: Service
@@ -77,3 +73,4 @@ spec:
     - protocol: TCP
       port: 3306
       targetPort: 3306
+  type: LoadBalancer
