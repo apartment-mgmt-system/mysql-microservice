@@ -42,7 +42,10 @@ jobs:
       # Step 5: Apply MySQL deployment
       - name: Apply Kubernetes MySQL deployment
         run: |
+          kubectl apply -f k8s/persistent-volume.yml
+          kubectl apply -f k8s/persistent-volume-claim.yml
           kubectl apply -f k8s/mysql-deployment.yml
+          kubectl apply -f k8s/mysql-service.yml
 
       # Step 6: Clear kubeconfig file
       - name: Clear kubeconfig file
