@@ -3,7 +3,7 @@ name: Deploy MySQL to Kubernetes
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
@@ -16,9 +16,14 @@ jobs:
 
       # Step 2: Set up kubectl to interact with the Kubernetes cluster
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v1
+        uses: azure/setup-kubectl@v3
         with:
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          version: "latest"
+
+      - name: Configure Kubectl using kubconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
 
       # Step 3: Create Kubernetes Secrets from GitHub Secrets
       - name: Create Kubernetes Secrets
@@ -26,8 +31,9 @@ jobs:
           kubectl create secret generic azure-secret \
             --from-literal=azurestorageaccountname=${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
             --from-literal=azurestorageaccountkey=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
+            --from-literal=azurecontainername=${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
             --dry-run=client -o yaml | kubectl apply -f -
-          
+
           kubectl create secret generic mysql-secret \
             --from-literal=mysql-root-password=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             --dry-run=client -o yaml | kubectl apply -f -
@@ -36,6 +42,10 @@ jobs:
       - name: Apply Kubernetes MySQL deployment
         run: |
           kubectl apply -f k8s/mysql-deployment.yml
+
+      - name: Clear kubeconfig file
+        run: |
+          rm -f $HOME/.kube/config
 
       # Step 5: Check MySQL pod status
       - name: Check MySQL pod status
