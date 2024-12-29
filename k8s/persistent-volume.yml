@@ -10,6 +10,9 @@ spec:
   azureFile:
     secretName: azure-secret # Secret that holds Azure Storage credentials
     secretNamespace: default # Namespace where the secret is stored
-    shareName: azurecontainername # Use the actual name as per the secret key
+    shareName:
+      valueFrom:
+        secretKeyRef:
+          name: azure-secret
+          key: azurefilename
     readOnly: false # Set to true if you want read-only access
-  persistentVolumeReclaimPolicy: Retain

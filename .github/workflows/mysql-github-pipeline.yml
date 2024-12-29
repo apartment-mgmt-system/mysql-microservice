@@ -32,7 +32,7 @@ jobs:
           kubectl create secret generic azure-secret \
             --from-literal=azurestorageaccountname=${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
             --from-literal=azurestorageaccountkey=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
-            --from-literal=azurecontainername=${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
+            --from-literal=azurefilename=${{ secrets.AZURE_FILE_CONTAINER_NAME }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
           kubectl create secret generic mysql-secret \
