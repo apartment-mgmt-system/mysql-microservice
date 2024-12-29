@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:latest
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+            #- name: MYSQL_DATABASE
+            #  valueFrom:
+            #    secretKeyRef:
+            #      name: mysql-secret
+            #      key: mysql-database
+            #- name: MYSQL_USER
+            #  valueFrom:
+            #    secretKeyRef:
+            #      name: mysql-secret
+            #      key: mysql-user
+            #- name: MYSQL_PASSWORD
+            #  valueFrom:
+            #    secretKeyRef:
+            #      name: mysql-secret
+            #      key: mysql-password
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: sql-script
+              mountPath: /docker-entrypoint-initdb.d/
+              readOnly: true
+      initContainers:
+        - name: azure-blob-init
+          image: mcr.microsoft.com/azure-storage/azcopy:latest
+          command: ["/bin/sh", "-c", "azcopy cp https://<your-storage-account-name>.blob.core.windows.net/<your-container-name>/Scripts.sql /docker-entrypoint-initdb.d/"]
+          env:
+            - name: AZURE_STORAGE_ACCOUNT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: azure-secret
+                  key: azurestorageaccountname
+            - name: AZURE_STORAGE_ACCOUNT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: azure-secret
+                  key: azurestorageaccountkey
+          volumeMounts:
+            - name: sql-script
+              mountPath: /docker-entrypoint-initdb.d/
+      volumes:
+        - name: sql-script
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306

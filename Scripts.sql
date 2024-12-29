@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS User_Management;
+CREATE DATABASE IF NOT EXISTS ServiceAndAsset_Management;
